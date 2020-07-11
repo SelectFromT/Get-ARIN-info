@@ -15,37 +15,37 @@ This was created out of a desire for similar Linux functionality in a base Windo
 
 
 Execute the script via your preferred method, VSCode, PowerShell, PowerShell ISE, etc. 
-<img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/InputChoice.jpg'>
+<br /><img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/InputChoice.jpg'>
 
 All options will complete by adding the destination output file to the clip board. This allows easy use of ii (Invoke-Item) to be called and the path pasted in for faster opening. 
-<img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/Invoke-ItemExample.jpg'>
+<br /><img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/Invoke-ItemExample.jpg'>
 
 A single IP can be entered, there is minor validation against the IP to ensure bad values are not entered:
-<img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/singleIP.jpg'>
+<br /><img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/singleIP.jpg'>
 
 Choosing a text file, CSV, or to parse a file will open a file select box, where you can navigate then chose the correlating file. Choosing Text will limit results in the open window to .txt files, CSV will limit to .csv files. Choosing to attempt to parse a file will allow any file to be selected, however, this does not guarantee PowerShell will be able to parse the file.
-<img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/FileSelect.jpg'>
+<br /><img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/FileSelect.jpg'>
 
 Selecting a CSV file will then prompt the user to select which column contains the IP addresses:
-<img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/CSVColumnSelect1.jpg'><br />
+<br /><img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/CSVColumnSelect1.jpg'><br />
 
-Highlight the correct column and click <b>"IP Selected"</b></br>
-<img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/CSVColumnSelect2.jpg'>
+Highlight the correct column and click <b>"IP Selected"</b>
+<br /><img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/CSVColumnSelect2.jpg'>
 
 Once compelted, the script indicates this with the following output for both <b>.txt and .csv</b> files:
-<img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/Text-CSV_LookupComplete.jpg'>
+<br /><img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/Text-CSV_LookupComplete.jpg'>
 
 Choosing to attempt to parse a file is not guaranteed the file can be parsed. With this in mind, the script will update you as it proceeds with the parse. It updates when the file is being imported, and again when it begins to parse the data.
-<img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/ParseFile.jpg'>
+<br /><img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/ParseFile.jpg'>
 
 
 Once the script has compelted, youc an use Invoke-Item (ii) to opent he CSV output, or navigate to the default save location to open the file (C:\temp\YYYYmmdd_hh-mm-ss.csv)
-Output includes several useful columns including:
-IP Searched
-IP range start
-IP range end
-Registration Date
-Last update date on file
-Registered company name, address, city, state, and zipcode, country, ARIN info web link, the block name and Net Reference.
-<img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/ExampleOutput.jpg'>
+<br />Output includes several useful columns including:
+<br />IP Searched
+<br />IP range start
+<br />IP range end
+<br />Registration Date
+<br />Last update date on file
+<br />Registered company name, address, city, state, and zipcode, country, ARIN info web link, the block name and Net Reference.
+<br /><img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/ExampleOutput.jpg'>
 
