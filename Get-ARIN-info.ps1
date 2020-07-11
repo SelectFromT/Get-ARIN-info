@@ -296,7 +296,7 @@ function Get-ARINInfo
 
 
             
-                $ipInfo | Select-Object Search_IP,IP_range_start,IP_range_end,Registration_date,Update_date,Registered_company_name,Registered_company_Address,Registered_company_city,Registered_company_State,Registered_company_Country,Registered_company_handle,Registered_company_ARIN_info,Block_Name,parent_Net_Reference | Export-Csv $outputPath -NoTypeInformation -Append 
+                $ipInfo | Select-Object Search_IP,IP_range_start,IP_range_end,Registration_date,Update_date,Registered_company_name,Registered_company_Address,Registered_company_city,Registered_company_State,Registered_company_PostalCode,Registered_company_Country,Registered_company_handle,Registered_company_ARIN_info,Block_Name,parent_Net_Reference | Export-Csv $outputPath -NoTypeInformation -Append 
 
                 Clear-Variable ipInfo
             }
