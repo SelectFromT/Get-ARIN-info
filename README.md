@@ -39,7 +39,7 @@ Choosing to attempt to parse a file is not guaranteed the file can be parsed. Wi
 <br /><img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/ParseFile.jpg'>
 
 
-Once the script has compelted, youc an use Invoke-Item (ii) to opent he CSV output, or navigate to the default save location to open the file (C:\temp\YYYYmmdd_hh-mm-ss.csv)
+Once the script has compelted, you can use Invoke-Item (ii) to opent he CSV output, or navigate to the default save location to open the file (C:\temp\YYYYmmdd_hh-mm-ss.csv)
 <br />Output includes several useful columns including:
 <br />IP Searched
 <br />IP range start
@@ -49,3 +49,22 @@ Once the script has compelted, youc an use Invoke-Item (ii) to opent he CSV outp
 <br />Registered company name, address, city, state, and zipcode, country, ARIN info web link, the block name and Net Reference.
 <br /><img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/ExampleOutput.jpg'>
 
+<B>But What about that Elasticsearch option?</B>
+You can now choose Elasticsearch as an output method. This allows faster pivoting through Kibana, and can allow easier seaching as well as visualizations. After choosing your input file type, choose our output as CSV or Elasticsearch:
+<br /><img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/ElasticOption.JPG'>
+
+You are prompted for your Elasticsearch server, in this example localhost, however it might be yourcompany-elastic.com
+<br /> as well as the Port you have your database on (Default 9200):
+<br /><img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/ElasticServer-Port.JPG'>
+
+What about IPs you have already searched for? Well, I handle that for you too. If the IP exists, it skips that and writes it to an output file. This allows you to maintain a running list of duplicates in case you track that information:
+<br /><img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/DuplicateIPs.JPG'>
+
+Once complete, you get the message that states the search is completed: 
+<br /><img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/ElasticComplete.JPG'>
+
+Personally, I do not prefer filtering on date for this instance. This allows me to look at all IPs I have looked up, then search for key terms, such as country. Here is an example of my filter preference when the Index Pattern is first created:
+<br /><img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/PersonalFilterPreference.JPG'>
+
+It might sound nice, but what does it look like? Well, here is an example of what it might look like:
+<br /><img src='https://github.com/SelectFromT/Get-ARIN-info/blob/master/SampleData/ExampleDashboard.JPG'>
