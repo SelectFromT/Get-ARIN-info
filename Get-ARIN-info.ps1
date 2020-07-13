@@ -5,6 +5,10 @@
 ## Regex parsed files cannot be guaranteed for perfect parsing. 
 
 
+[void] [System.Reflection.Assembly]::LoadWithPartialName("System.Drawing")
+[void] [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms")
+
+
 # reusable file selector. this does not open folder locaitons.
 function Select-File
 {
@@ -118,6 +122,30 @@ function Get-InputSelection
     return $inputSelection
 }
 
+function Set-OutputSelection
+{
+    Write-Host('Please choose one of the following ways to Output the data:')
+
+    DO
+    {
+        try
+        {
+            Write-Host("1) CSV Output `n2) Output to Elasticsearch database")
+            $outputSelection = [int](Read-Host('Type Number 1 or 2'))
+        }
+        catch
+        {
+            Write-Host('Input does not appear to be a valid Int')
+        }
+        if(!($outputSelection -in (1..2)))
+        {
+            Write-Host("`n`nInput not a valid option, Please use 1 or 2`n`n") -ForegroundColor Red
+        }
+    }WHILE(!($outputSelection -in (1..2)))
+
+    return $outputSelection
+}
+
 # read in single IP and validate it is an IP.
 function Get-CommLineIP
 {
@@ -213,12 +241,53 @@ function Get-IPField
 function Get-ARINInfo
 {
     param([string]$FileFullPath,
-          $ipList
+          $ipList,
+          $outputSelection
         )
 
-    $FileName = [string](Get-Date).Year + [string](Get-Date).Month + [string](Get-Date).Day + '_' + [string](Get-Date).Hour + - + [string](Get-Date).Minute + - + [string](Get-Date).Second + '.csv'
-    $outputPath = 'C:\Temp\' + $FileName
+    $errorFile = 'ARIN_Elastic_Duplications_' + [string](Get-Date).Year + [string](Get-Date).Month + [string](Get-Date).Day + '_' + [string](Get-Date).Hour + - + [string](Get-Date).Minute + - + [string](Get-Date).Second + '.txt'
+    
+    # Read in Elasticsearch database and port.
+    if($outputSelection -eq 2)
+    {
+        Write-Host("Enter the Elasticsearch database INSTANCE like the highlighted example: http://") -NoNewline
+        Write-Host("SomeTestDomain.net") -NoNewline -BackgroundColor Cyan
+        $databaseName = Read-Host(':9200 ')
 
+        Write-Host("Enter the Elasticsearch database PORT like the highlighted example: http://SomeTestDomain.net") -NoNewline
+        Write-Host("9200") -NoNewline -BackgroundColor Cyan
+        $databasePort = Read-Host(' ') 
+
+        $connTestURL = 'http://' + $databaseName + ':' + $databasePort + '/'
+
+        try
+        {
+            $connTest = Invoke-WebRequest -Method Get -Uri $connTestURL
+            
+            #If connection successful, test and set the existence of the arin_lookup_data index.
+            $ES_test_URL = 'http://' + $databaseName + ':' + $databasePort + '/arin_lookup_data'
+
+            try
+            {
+                $ES_index_exists = Invoke-WebRequest -Method Get -Uri $ES_test_URL -ErrorAction SilentlyContinue
+            }
+            catch
+            {
+                $ES_index_exists = $false
+            }
+        }
+        catch
+        {
+            $response = Read-Host("Failed to connect to database: $databaseName `nValidate the database name/address and port, then rerun script")
+        }
+
+    }
+    else
+    {
+        $FileName = 'ARIN_Lookup_' + [string](Get-Date).Year + [string](Get-Date).Month + [string](Get-Date).Day + '_' + [string](Get-Date).Hour + - + [string](Get-Date).Minute + - + [string](Get-Date).Second + '.csv'
+        
+        $outputPath = 'C:\Temp\' + $FileName
+    }
 
     if($ipList.Count -lt 1)
     {
@@ -234,6 +303,7 @@ function Get-ARINInfo
 
     foreach($i in $ipList)
     {
+
         DO
         {
             $url = 'http://whois.arin.net/rest/ip/' + $i
@@ -295,19 +365,62 @@ function Get-ARINInfo
                 }
 
 
-            
-                $ipInfo | Select-Object Search_IP,IP_range_start,IP_range_end,Registration_date,Update_date,Registered_company_name,Registered_company_Address,Registered_company_city,Registered_company_State,Registered_company_PostalCode,Registered_company_Country,Registered_company_handle,Registered_company_ARIN_info,Block_Name,parent_Net_Reference | Export-Csv $outputPath -NoTypeInformation -Append 
+                switch($outputSelection)
+                {
+                    #CSV output to file:
+                    1
+                    {
+                        $ipInfo | Select-Object Search_IP,IP_range_start,IP_range_end,Registration_date,Update_date,Registered_company_name,Registered_company_Address,Registered_company_city,Registered_company_State,Registered_company_PostalCode,Registered_company_Country,Registered_company_handle,Registered_company_ARIN_info,Block_Name,parent_Net_Reference | Export-Csv $outputPath -NoTypeInformation -Append 
+                    }
+
+                    #output to Elasticsearch:
+                    2
+                    {
+                        #create the JSON for Elasticsearch
+                        $arinData = $ipInfo | Select-Object Search_IP,IP_range_start,IP_range_end,Registration_date,Update_date,Registered_company_name,Registered_company_Address,Registered_company_city,Registered_company_State,Registered_company_PostalCode,Registered_company_Country,Registered_company_handle,Registered_company_ARIN_info,Block_Name,parent_Net_Reference | ConvertTo-Json
+                        
+                        #create the Elasticsearch request string
+                        $elasticsearchURL = 'http://' + $databaseName + ':' + "$databasePort/arin_lookup_data/IPData"
+
+                        if($ES_index_exists -eq $false)
+                        {
+                            Invoke-WebRequest -Method Post -Uri 'http://localhost:9200/arin_lookup_data/IPData' -Body $arinData -ContentType 'application/json' | Out-Null
+                        }
+                        else
+                        {
+                            $existingIPCount = (((Invoke-WebRequest -Method Get -Uri $ES_test_URL).content | ConvertFrom-Json).hits.total.value)
+                            if($existingIPCount -eq 0)
+                            {
+                               Invoke-WebRequest -Method Post -Uri 'http://localhost:9200/arin_lookup_data/IPData' -Body $arinData -ContentType 'application/json' | Out-Null
+                            }
+                            else
+                            {
+                                $i | Out-File $errorFile -Append
+                                Write-Host("$i is already in Elasticsearch. Previously identified IPs written to C:\Temp\$errorFile")
+                            }
+                        }
+
+                    }
+                }
 
                 Clear-Variable ipInfo
             }
 
         }WHILE($arinInfo.StatusCode -ne 200 -or (($arinInfo.Content | ConvertFrom-Json).net.resources.limitExceeded.'$' -eq $true))
+
+    }
+
+    if($outputSelection -eq 1)
+    {
+        Write-Host("`n`nAll ARIN information written to $outputPath. Path has been copied to CLIP BOARD.") -ForegroundColor Green
+
+        Set-Clipboard $outputPath
+    }
+    else
+    {
+        Write-Host("`n`nAll ARIN information should now be in your Elasticsearch database.")
     }
     
-
-    Write-Host("`n`nAll arin information written to $outputPath. Path has been copied to CLIP BOARD.") -ForegroundColor Green
-    Set-Clipboard $outputPath
-
 }
 
 #main function
@@ -318,6 +431,7 @@ function Get-IPInfo
 
 
     $inputSel = Get-InputSelection
+    $outputSel = Set-OutputSelection
 
     Write-Host($inputSel)
 
@@ -326,14 +440,14 @@ function Get-IPInfo
         1 
         {
             $singleIP = Get-CommLineIP
-            Get-ARINInfo -ipList $singleIP
+            Get-ARINInfo -ipList $singleIP -outputSelection $outputSel
         }
         
         2 
         {
             $fInfo = Select-File 2
             $textIP = Get-Content($fInfo.FullName) | Sort-Object -Unique
-            Get-ARINInfo -ipList $textIP -FileFullPath $fInfo.FullName
+            Get-ARINInfo -ipList $textIP -FileFullPath $fInfo.FullName -outputSelection $outputSel
         }
         
         3 
@@ -343,7 +457,7 @@ function Get-IPInfo
             $csvColumns = ($csvFileInfo | Get-Member | Where-Object{$_.MemberType -ieq 'noteproperty'} | Select-Object Name).Name
             $ipColumn = Get-IPField $csvColumns
             $csvIPList = $csvFileInfo.$ipColumn | Sort-Object -Unique
-            Get-ARINInfo -ipList $csvIPList -FileFullPath $fInfo.FullName
+            Get-ARINInfo -ipList $csvIPList -FileFullPath $fInfo.FullName -outputSelection $outputSel
         }
         
         4 
@@ -354,7 +468,7 @@ function Get-IPInfo
             Write-Host("`n`nBeginning to parse data for IP match, this may take some time") -ForegroundColor Cyan
             $rawFileIPs = ($rawFileInfo | Select-String -Pattern '\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b' -AllMatches).Matches.Value
             $rawIPList = $rawFileIPs | Sort-Object -Unique
-            Get-ARINInfo $rawIPList -FileFullPath $fInfo.FullName       
+            Get-ARINInfo $rawIPList -FileFullPath $fInfo.FullName -outputSelection $outputSel    
         }
     }
 
