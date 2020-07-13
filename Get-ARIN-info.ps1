@@ -388,14 +388,15 @@ function Get-ARINInfo
                         }
                         else
                         {
-                            $existingIPCount = (((Invoke-WebRequest -Method Get -Uri $ES_test_URL).content | ConvertFrom-Json).hits.total.value)
+                            $ESSearchURL = $ES_test_URL + "/_search?q=$i"
+                            $existingIPCount = (((Invoke-WebRequest -Method Get -Uri $ESSearchURL).content | ConvertFrom-Json).hits.total.value)
                             if($existingIPCount -eq 0)
                             {
                                Invoke-WebRequest -Method Post -Uri 'http://localhost:9200/arin_lookup_data/IPData' -Body $arinData -ContentType 'application/json' | Out-Null
                             }
                             else
                             {
-                                $i | Out-File $errorFile -Append
+                                $i | Out-File "C:\Temp\$errorFile" -Append
                                 Write-Host("$i is already in Elasticsearch. Previously identified IPs written to C:\Temp\$errorFile")
                             }
                         }
