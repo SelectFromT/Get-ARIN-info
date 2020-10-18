@@ -467,7 +467,7 @@ function Get-IPInfo
             Write-Host("`n`nBeginning to import file, larger files can take additional time") -Foregroundcolor Cyan
             $rawFileInfo = Get-Content($fInfo.FullName)
             Write-Host("`n`nBeginning to parse data for IP match, this may take some time") -ForegroundColor Cyan
-            $rawFileIPs = ($rawFileInfo | Select-String -Pattern '\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b' -AllMatches).Matches.Value
+            $rawFileIPs = ($rawFileInfo | Select-String -Pattern '(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' -AllMatches).Matches.Value
             $rawIPList = $rawFileIPs | Sort-Object -Unique
             Get-ARINInfo $rawIPList -FileFullPath $fInfo.FullName -outputSelection $outputSel    
         }
